@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+langchain
+langchain_experimental
+langchain_groq
+gspread
+gspread_dataframe
+pandas
+google-auth
