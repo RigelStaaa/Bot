@@ -5,7 +5,9 @@ import gspread
 from gspread_dataframe import get_as_dataframe
 from google.oauth2.service_account import Credentials
 import os
+import json
 
+from google.oauth2 import service_account
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
@@ -25,7 +27,8 @@ llm = ChatGroq(
 
 # Load Google Sheet into DataFrame
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 gc = gspread.authorize(creds)
 
 sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
