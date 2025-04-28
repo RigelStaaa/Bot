@@ -3,20 +3,17 @@ from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_groq import ChatGroq
 import gspread
 from gspread_dataframe import get_as_dataframe
-from google.oauth2.service_account import Credentials
-import os
-import json
-
 from google.oauth2 import service_account
 from fastapi import FastAPI
 from pydantic import BaseModel
-import uvicorn
+import os
+import json
 
 # Set up environment variables
-os.environ["GROQ_API_KEY"] = "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"
+# Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
 
-# Initialize FastAPI app
 app = FastAPI()
+
 @app.get("/")
 async def root():
     return {"message": "Hello, your FastAPI app is running!"}
@@ -44,7 +41,6 @@ agent = create_pandas_dataframe_agent(
     df,
     verbose=True,
     agent_type="openai-tools",
-    handle_parsing_errors=True,
     allow_dangerous_code=True
 )
 
@@ -59,7 +55,3 @@ async def ask_question(query: Query):
         return {"response": response["output"]}
     except Exception as e:
         return {"error": str(e)}
-
-if __name__ == "__main__":
-    uvicorn.run("botfast:app", host="0.0.0.0", port=8000, reload=True)
-
