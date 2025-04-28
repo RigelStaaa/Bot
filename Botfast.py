@@ -30,7 +30,7 @@ async def root():
             </style>
         </head>
         <body>
-            <h1>Welcome to My Chatbot</h1>
+            <h1>Welcome to OSV Chatbot by Anurag G.</h1>
             <input type="text" id="userInput" placeholder="Type a message..." style="width:300px;" />
             <button onclick="sendMessage()">Send</button>
             <div id="chat"></div>
