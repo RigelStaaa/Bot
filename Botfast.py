@@ -4,19 +4,16 @@ from langchain_groq import ChatGroq
 import gspread
 from gspread_dataframe import get_as_dataframe
 from google.oauth2 import service_account
-from fastapi import FastAPI
-from pydantic import BaseModel
-import os
-import json
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-
+import os
+import json
+from pydantic import BaseModel
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
 
 app = FastAPI()
-
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -46,7 +43,7 @@ async def root():
                     const chatDiv = document.getElementById('chat');
                     chatDiv.innerHTML += `<div class='message user'>You: ${userInput}</div>`;
 
-                    const response = await fetch('/chat', {
+                    const response = await fetch('/ask', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: userInput })
@@ -90,12 +87,15 @@ agent = create_pandas_dataframe_agent(
 
 # Request model
 class Query(BaseModel):
-    question: str
+    message: str
 
 @app.post("/ask")
 async def ask_question(query: Query):
-    data = await request.json()
-    user_message = data.get("message")
-    # Example bot reply: you can replace this with your AI model output
-    bot_response = f"You said: {user_message}"
-    return JSONResponse(content={"response": bot_response})
+    try:
+        # Pass the user message to the LangChain agent
+        response = agent.invoke({"input": query.message})
+        # Returning the bot's response
+        return JSONResponse(content={"response": response["output"]})
+    except Exception as e:
+        # In case of error, return a message
+        return JSONResponse(content={"error": str(e)}, status_code=400)
