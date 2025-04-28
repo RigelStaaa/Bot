@@ -11,6 +11,8 @@ import json
 from pydantic import BaseModel
 from difflib import get_close_matches
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
