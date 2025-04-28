@@ -9,6 +9,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import os
 import json
 from pydantic import BaseModel
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
@@ -119,16 +121,19 @@ class Query(BaseModel):
 @app.post("/ask")
 async def ask_question(query: Query):
     try:
-        # Pass the user message to the LangChain agent
         print(f"User query: {query.message}")  # Debugging: Print the user's query
-        response = agent.invoke({"input": query.message})
         
-        # Debugging: Print the bot's response
-        print(f"Bot response: {response['output']}")
+        # Fuzzy matching to find the best match from the dataframe
+        best_match = process.extractOne(query.message, df['questions'].tolist(), scorer=fuzz.partial_ratio)
         
-        return JSONResponse(content={"response": response["output"]})
+        if best_match and best_match[1] > 70:  # Only match if the score is above 70%
+            matched_answer = df.iloc[best_match[2]]['answers']
+            print(f"Found matching answer: {matched_answer}")
+            return JSONResponse(content={"response": matched_answer})
+        else:
+            print("No close match found, using default response.")
+            return JSONResponse(content={"response": "Sorry, I don't have an answer for that."})
     except Exception as e:
-        # In case of error, return a message
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
 
