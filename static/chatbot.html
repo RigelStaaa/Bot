@@ -25,6 +25,8 @@
             padding: 10px;
             text-align: center;
             font-weight: bold;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
         }
         .chat-box {
             flex-grow: 1;
@@ -32,17 +34,29 @@
             padding: 10px;
             display: flex;
             flex-direction: column;
+            gap: 10px;
         }
         .message {
-            margin: 5px 0;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
+            border-radius: 15px;
+            padding: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            box-sizing: border-box;
         }
-        .user-message { text-align: right; color: rgb(37, 19, 4); }
+        .user-message {
+            background-color: #e0f7fa;
+            margin-left: auto;
+            border-radius: 15px 15px 0 15px;
+            text-align: right;
+            align-items: flex-end;
+        }
         .bot-message {
+            background-color: #f1f1f1;
+            border-radius: 15px 15px 15px 0;
             text-align: left;
-            color: green;
-            justify-content: flex-start;
+            align-items: flex-start;
         }
         .message img {
             width: 40px;
@@ -103,7 +117,7 @@
             if (!userInput) return;
 
             // Display user's message
-            displayMessage(userInput, "user-message");
+            displayMessage(userInput, "user-message", "https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3383.jpg?semt=ais_hybrid&w=740");  // Replace with your user image URL
 
             // Call the FastAPI backend to get the response
             const response = await fetch("/ask", {
@@ -118,24 +132,22 @@
             const botResponse = data.response || "I'm sorry, I couldn't get that.";
 
             // Display bot's response
-            displayMessage(botResponse, "bot-message");
+            displayMessage(botResponse, "bot-message", "https://media.licdn.com/dms/image/v2/C510BAQGZc-IIOjzhyg/company-logo_200_200/company-logo_200_200/0/1630621762338/osvftwz_logo?e=2147483647&v=beta&t=mPt8MQGaBLAPEuSi9ZqJO4BKv8OExPYOKpV047P0Kfc");  // Replace with bot image URL
 
             // Clear input field
             document.getElementById("user-input").value = "";
             document.getElementById("send-btn").disabled = true;
         }
 
-        function displayMessage(message, senderClass) {
+        function displayMessage(message, senderClass, imgUrl) {
             const chatBox = document.getElementById("chat-box");
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message", senderClass);
 
-            // Create image for bot response
-            if (senderClass === "bot-message") {
-                const botImage = document.createElement("img");
-                botImage.src = "https://media.licdn.com/dms/image/v2/C510BAQGZc-IIOjzhyg/company-logo_200_200/company-logo_200_200/0/1630621762338/osvftwz_logo?e=2147483647&v=beta&t=mPt8MQGaBLAPEuSi9ZqJO4BKv8OExPYOKpV047P0Kfc"; // Replace with your bot image URL
-                messageDiv.appendChild(botImage);
-            }
+            // Create image for user and bot response
+            const image = document.createElement("img");
+            image.src = imgUrl;
+            messageDiv.appendChild(image);
 
             const textDiv = document.createElement("div");
             textDiv.textContent = message;
