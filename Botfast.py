@@ -17,6 +17,9 @@ os.environ["GROQ_API_KEY"] = "gsk_Ei5MNUedRA5ktquXsnpXWGdyb3FYQWhwnOKtAkBddVZZq5
 
 # Initialize FastAPI app
 app = FastAPI()
+@app.get("/")
+async def root():
+    return {"message": "Hello, your FastAPI app is running!"}
 
 # Initialize Groq model
 llm = ChatGroq(
