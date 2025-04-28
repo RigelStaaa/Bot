@@ -8,3 +8,4 @@ gspread_dataframe
 pandas
 google-auth
 tabulate
+fuzzywuzzy
