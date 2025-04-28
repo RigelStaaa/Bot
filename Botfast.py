@@ -39,27 +39,36 @@ async def root():
 
             <script>
                 async function sendMessage() {
-                    const userInput = document.getElementById('userInput').value;
-                    if (!userInput) return;
-                    
-                    const chatDiv = document.getElementById('chat');
-                    chatDiv.innerHTML += `<div class='message user'>You: ${userInput}</div>`;  // FIX: use backticks
+                const userInput = document.getElementById('userInput').value.trim();
+                if (!userInput) return;
+        
+                const chatDiv = document.getElementById('chat');
+                chatDiv.innerHTML += `<div class='message user'>You: ${userInput}</div>`;
 
-                    const response = await fetch('/ask', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: userInput })
-                    });
-                    const data = await response.json();
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userInput })
+                });
+                const data = await response.json();
 
-                    chatDiv.innerHTML += `<div class='message bot'>Bot: ${data.response}</div>`;  // FIX: use backticks
-                    document.getElementById('userInput').value = '';
-                    chatDiv.scrollTop = chatDiv.scrollHeight;
-                }
-            </script>
-        </body>
-    </html>
-    """
+                chatDiv.innerHTML += `<div class='message bot'>Bot: ${data.response}</div>`;
+                document.getElementById('userInput').value = '';
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }
+
+            // Add event listener for 'Enter' key
+            document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();  // Prevent form submit
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
+"""
 
 
 # Initialize Groq model
@@ -125,14 +134,20 @@ async def ask_question(query: Query):
         user_input = query.message.strip().lower()
         print(f"User query: {user_input}")  # Debug
 
+        if not user_input:
+            return JSONResponse(content={"response": "Please enter a message."})
+
         # Step 1: Find the best matching question
-        questions_list = df['questions'].dropna().tolist()
+        questions_list = [q.lower() for q in df['questions'].dropna().tolist()]  # Lowercased questions
+
         match = get_close_matches(user_input, questions_list, n=1, cutoff=0.6)
 
         if match:
             best_question = match[0]
-            best_answer = df[df['questions'] == best_question]['answers'].values[0]
-            print(f"Matched Question: {best_question} -> Answer: {best_answer}")
+            # Find the corresponding original answer (match against lowercased question)
+            original_question_index = questions_list.index(best_question)
+            best_answer = df.iloc[original_question_index]['answers']
+            print(f"Matched Question: {df.iloc[original_question_index]['questions']} -> Answer: {best_answer}")
             return JSONResponse(content={"response": best_answer})
         else:
             return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that."})
@@ -140,6 +155,7 @@ async def ask_question(query: Query):
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
+
 
 # Refresh endpoint
 @app.get("/refresh")
