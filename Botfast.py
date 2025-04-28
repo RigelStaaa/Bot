@@ -67,16 +67,32 @@ llm = ChatGroq(
 )
 
 # Load Google Sheet into DataFrame
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
-creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
-gc = gspread.authorize(creds)
+def load_data():
+    SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+    creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+    gc = gspread.authorize(creds)
 
-sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
-worksheet = sheet.worksheet("Sheet1")
-df = get_as_dataframe(worksheet).dropna(how='all')
+    sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
+    worksheet = sheet.worksheet("Sheet1")
+    return get_as_dataframe(worksheet).dropna(how='all')
 
-# LangChain Agent
+# Function to refresh the bot with new data
+def refresh_bot():
+    global df, agent  # Use global variables to update them
+    df = load_data()  # Reload the data
+    agent = create_pandas_dataframe_agent(
+        llm,
+        df,
+        verbose=True,
+        agent_type="openai-tools",
+        allow_dangerous_code=True
+    )
+    print("Bot refreshed with the latest data.")
+    return agent
+
+# Initial data load and agent creation
+df = load_data()
 agent = create_pandas_dataframe_agent(
     llm,
     df,
@@ -99,3 +115,10 @@ async def ask_question(query: Query):
     except Exception as e:
         # In case of error, return a message
         return JSONResponse(content={"error": str(e)}, status_code=400)
+
+# Refresh endpoint
+@app.get("/refresh")
+async def refresh():
+    global agent  # Access the global agent
+    agent = refresh_bot()  # Refresh the bot
+    return JSONResponse(content={"message": "Bot refreshed successfully!"})
