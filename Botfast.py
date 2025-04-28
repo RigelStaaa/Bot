@@ -75,12 +75,23 @@ def load_data():
 
     sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
     worksheet = sheet.worksheet("Sheet1")
-    return get_as_dataframe(worksheet).dropna(how='all')
+    
+    # Debugging: Print to confirm data is being loaded
+    df = get_as_dataframe(worksheet).dropna(how='all')
+    print(f"Loaded {len(df)} entries from Google Sheets.")
+    return df
 
 # Function to refresh the bot with new data
 def refresh_bot():
     global df, agent  # Use global variables to update them
     df = load_data()  # Reload the data
+    
+    # Debugging: Ensure data is loaded before creating the agent
+    if df.empty:
+        print("Warning: No data loaded. The bot will not function properly.")
+    else:
+        print(f"Data refreshed with {len(df)} entries.")
+    
     agent = create_pandas_dataframe_agent(
         llm,
         df,
@@ -109,11 +120,16 @@ class Query(BaseModel):
 async def ask_question(query: Query):
     try:
         # Pass the user message to the LangChain agent
+        print(f"User query: {query.message}")  # Debugging: Print the user's query
         response = agent.invoke({"input": query.message})
-        # Returning the bot's response
+        
+        # Debugging: Print the bot's response
+        print(f"Bot response: {response['output']}")
+        
         return JSONResponse(content={"response": response["output"]})
     except Exception as e:
         # In case of error, return a message
+        print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
 
 # Refresh endpoint
