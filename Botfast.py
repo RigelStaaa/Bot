@@ -21,6 +21,7 @@ async def root():
     <html>
         <head>
             <title>Chatbot</title>
+            <link rel="icon" href="data:," />  <!-- Fix favicon error -->
             <style>
                 body { font-family: Arial, sans-serif; background: #f2f2f2; padding: 20px; }
                 #chat { margin-top: 20px; }
@@ -41,7 +42,7 @@ async def root():
                     if (!userInput) return;
                     
                     const chatDiv = document.getElementById('chat');
-                    chatDiv.innerHTML += <div class='message user'>You: ${userInput}</div>;
+                    chatDiv.innerHTML += `<div class='message user'>You: ${userInput}</div>`;  // FIX: use backticks
 
                     const response = await fetch('/ask', {
                         method: 'POST',
@@ -50,7 +51,7 @@ async def root():
                     });
                     const data = await response.json();
 
-                    chatDiv.innerHTML += <div class='message bot'>Bot: ${data.response}</div>;
+                    chatDiv.innerHTML += `<div class='message bot'>Bot: ${data.response}</div>`;  // FIX: use backticks
                     document.getElementById('userInput').value = '';
                     chatDiv.scrollTop = chatDiv.scrollHeight;
                 }
@@ -58,6 +59,7 @@ async def root():
         </body>
     </html>
     """
+
 
 # Initialize Groq model
 llm = ChatGroq(
