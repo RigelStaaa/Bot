@@ -131,30 +131,50 @@ class Query(BaseModel):
 @app.post("/ask")
 async def ask_question(query: Query):
     try:
-        user_input = query.message.strip().lower()
+        user_input = query.message.strip()
         print(f"User query: {user_input}")  # Debug
 
         if not user_input:
             return JSONResponse(content={"response": "Please enter a message."})
 
-        # Step 1: Find the best matching question
-        questions_list = [q.lower() for q in df['questions'].dropna().tolist()]  # Lowercased questions
-
-        match = get_close_matches(user_input, questions_list, n=1, cutoff=0.6)
+        # Step 1: Fast try with string matching
+        questions_list = [q.lower() for q in df['questions'].dropna().tolist()]
+        match = get_close_matches(user_input.lower(), questions_list, n=1, cutoff=0.7)
 
         if match:
             best_question = match[0]
-            # Find the corresponding original answer (match against lowercased question)
             original_question_index = questions_list.index(best_question)
             best_answer = df.iloc[original_question_index]['answers']
-            print(f"Matched Question: {df.iloc[original_question_index]['questions']} -> Answer: {best_answer}")
+            print(f"[Fast Match] {df.iloc[original_question_index]['questions']} -> {best_answer}")
+            return JSONResponse(content={"response": best_answer})
+
+        # Step 2: If no close string match, do semantic search using Groq
+        all_questions = "\n".join(f"- {q}" for q in df['questions'].dropna().tolist())
+
+        prompt = (
+            f"You are an intelligent FAQ assistant.\n"
+            f'A user asked: "{user_input}"\n\n'
+            "Choose the most relevant question from the following list based on meaning (NOT just words):\n\n"
+            f"{all_questions}\n\n"
+            "Reply ONLY with the exact matching question text. No extra explanation."
+        )
+
+        response = llm.invoke(prompt)
+        matched_question_text = response.content.strip()
+
+        # Step 3: Validate the matched question
+        if matched_question_text in df['questions'].values:
+            best_answer = df[df['questions'] == matched_question_text]['answers'].values[0]
+            print(f"[Semantic Match] {matched_question_text} -> {best_answer}")
             return JSONResponse(content={"response": best_answer})
         else:
+            print("[Semantic Match Failed]")
             return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that."})
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
+
 
 
 # Refresh endpoint
