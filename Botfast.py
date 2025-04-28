@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import os
 import json
 from pydantic import BaseModel
+from difflib import get_close_matches
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
@@ -121,16 +122,22 @@ class Query(BaseModel):
 @app.post("/ask")
 async def ask_question(query: Query):
     try:
-        # Pass the user message to the LangChain agent
-        print(f"User query: {query.message}")  # Debugging: Print the user's query
-        response = agent.invoke({"input": query.message})
-        
-        # Debugging: Print the bot's response
-        print(f"Bot response: {response['output']}")
-        
-        return JSONResponse(content={"response": response["output"]})
+        user_input = query.message.strip().lower()
+        print(f"User query: {user_input}")  # Debug
+
+        # Step 1: Find the best matching question
+        questions_list = df['questions'].dropna().tolist()
+        match = get_close_matches(user_input, questions_list, n=1, cutoff=0.6)
+
+        if match:
+            best_question = match[0]
+            best_answer = df[df['questions'] == best_question]['answers'].values[0]
+            print(f"Matched Question: {best_question} -> Answer: {best_answer}")
+            return JSONResponse(content={"response": best_answer})
+        else:
+            return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that."})
+
     except Exception as e:
-        # In case of error, return a message
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
 
