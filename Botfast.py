@@ -81,6 +81,11 @@ def load_data():
     # Debugging: Print to confirm data is being loaded
     df = get_as_dataframe(worksheet).dropna(how='all')
     print(f"Loaded {len(df)} entries from Google Sheets.")
+    
+    # Print the columns and first few rows for debugging
+    print(f"Columns: {df.columns.tolist()}")
+    print(f"Data Preview: {df.head()}")
+    
     return df
 
 # Function to refresh the bot with new data
@@ -126,12 +131,20 @@ async def ask_question(query: Query):
         # Fuzzy matching to find the best match from the dataframe
         best_match = process.extractOne(query.message, df['questions'].tolist(), scorer=fuzz.partial_ratio)
         
-        if best_match and best_match[1] > 70:  # Only match if the score is above 70%
-            matched_answer = df.iloc[best_match[2]]['answers']
-            print(f"Found matching answer: {matched_answer}")
-            return JSONResponse(content={"response": matched_answer})
+        if best_match:
+            # Ensure that the index exists and is valid
+            score = best_match[1]
+            index = best_match[2]
+            
+            if score > 70 and index is not None:
+                matched_answer = df.iloc[index]['answers']
+                print(f"Found matching answer: {matched_answer}")
+                return JSONResponse(content={"response": matched_answer})
+            else:
+                print("No close match found, using default response.")
+                return JSONResponse(content={"response": "Sorry, I don't have an answer for that."})
         else:
-            print("No close match found, using default response.")
+            print("No best match found, using default response.")
             return JSONResponse(content={"response": "Sorry, I don't have an answer for that."})
     except Exception as e:
         print(f"Error occurred: {str(e)}")
