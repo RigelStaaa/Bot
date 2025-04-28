@@ -10,65 +10,19 @@ import os
 import json
 from pydantic import BaseModel
 from difflib import get_close_matches
+from fastapi.staticfiles import StaticFiles
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
 
 app = FastAPI()
 
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    return """
-    <html>
-        <head>
-            <title>Chatbot</title>
-            <link rel="icon" href="data:," />  <!-- Fix favicon error -->
-            <style>
-                body { font-family: Arial, sans-serif; background: #f2f2f2; padding: 20px; }
-                #chat { margin-top: 20px; }
-                .message { margin: 10px 0; }
-                .user { font-weight: bold; color: blue; }
-                .bot { font-weight: bold; color: green; }
-            </style>
-        </head>
-        <body>
-            <h1>Welcome to OSV Chatbot by Anurag G.</h1>
-            <input type="text" id="userInput" placeholder="Type a message..." style="width:300px;" />
-            <button onclick="sendMessage()">Send</button>
-            <div id="chat"></div>
+# Serve static files (HTML, JS, CSS)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-            <script>
-                async function sendMessage() {
-                const userInput = document.getElementById('userInput').value.trim();
-                if (!userInput) return;
-        
-                const chatDiv = document.getElementById('chat');
-                chatDiv.innerHTML += `<div class='message user'>You: ${userInput}</div>`;
-
-                const response = await fetch('/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userInput })
-                });
-                const data = await response.json();
-
-                chatDiv.innerHTML += `<div class='message bot'>Bot: ${data.response}</div>`;
-                document.getElementById('userInput').value = '';
-                chatDiv.scrollTop = chatDiv.scrollHeight;
-            }
-
-            // Add event listener for 'Enter' key
-            document.getElementById('userInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();  // Prevent form submit
-                sendMessage();
-            }
-        });
-    </script>
-
-</body>
-</html>
-"""
+@app.get("/")
+async def get_chat_widget():
+    return FileResponse("static/chatbot.html")  # Returns your chatbot HTML file
 
 
 # Initialize Groq model
