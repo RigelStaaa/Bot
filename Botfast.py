@@ -8,6 +8,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import os
 import json
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
