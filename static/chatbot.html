@@ -6,6 +6,12 @@
     <script>
         let isRegistered = false; // Track if user filled form
 
+        window.onload = function () {
+            // Show registration form by default
+            document.getElementById("registration-form").style.display = "block";
+            document.getElementById("chat-interface").style.display = "none";
+        };
+
         async function registerUser(event) {
             event.preventDefault();
             const name = document.getElementById("name").value.trim();
