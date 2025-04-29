@@ -85,6 +85,37 @@ class Query(BaseModel):
     message: str
 
 @app.post("/ask")
+
+class ClientInfo(BaseModel):
+    name: str
+    email: str
+    phone: str
+
+@app.post("/start")
+async def start_chat(client: ClientInfo):
+    try:
+        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+        credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+        creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+        gc = gspread.authorize(creds)
+
+        sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
+        
+        # Assuming you have a second sheet named 'Clients' to store client info
+        try:
+            worksheet = sheet.worksheet("Clients")
+        except gspread.exceptions.WorksheetNotFound:
+            worksheet = sheet.add_worksheet(title="Clients", rows="1000", cols="3")
+            worksheet.append_row(["Name", "Email", "Phone"])
+
+        # Append client data
+        worksheet.append_row([client.name, client.email, client.phone])
+
+        return JSONResponse(content={"message": "Client information stored successfully."})
+
+    except Exception as e:
+        print(f"Error occurred while storing client info: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=400)
 async def ask_question(query: Query):
     try:
         user_input = query.message.strip()
