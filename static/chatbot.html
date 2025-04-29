@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <title>Chatbot</title>
     <script>
-        let isRegistered = false; // Track if user filled form
+        let isRegistered = false;
 
-        window.onload = function () {
-            // Show registration form by default
+        document.addEventListener("DOMContentLoaded", () => {
+            // Ensure the registration form is visible on load
             document.getElementById("registration-form").style.display = "block";
             document.getElementById("chat-interface").style.display = "none";
-        };
+        });
 
         async function registerUser(event) {
             event.preventDefault();
