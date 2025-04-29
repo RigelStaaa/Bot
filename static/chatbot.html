@@ -2,14 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chatbot</title>
+    <title>Chatbot by Anurag G.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        #registration-form, #chat-interface {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #chat-box {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+        }
+
+        .chat-message b {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        #user-input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+
     <script>
         let isRegistered = false;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Ensure the registration form is visible on load
             document.getElementById("registration-form").style.display = "block";
             document.getElementById("chat-interface").style.display = "none";
+
+            document.getElementById("user-input").addEventListener("keypress", function (e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
         });
 
         async function registerUser(event) {
@@ -59,28 +140,35 @@
             });
 
             const data = await response.json();
-            document.getElementById("chat-box").innerHTML += `<div><b>You:</b> ${userInput}</div>`;
-            document.getElementById("chat-box").innerHTML += `<div><b>Bot:</b> ${data.response}</div>`;
+            const chatBox = document.getElementById("chat-box");
+
+            chatBox.innerHTML += `
+                <div class="chat-message"><b>You:</b> ${userInput}</div>
+                <div class="chat-message"><b>Bot:</b> ${data.response}</div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
             document.getElementById("user-input").value = "";
         }
     </script>
 </head>
 <body>
     <div id="registration-form">
-        <h2>Enter your information to start</h2>
+        <h2>Start Chatting</h2>
         <form onsubmit="registerUser(event)">
-            <input type="text" id="name" placeholder="Name" required><br><br>
-            <input type="email" id="email" placeholder="Email" required><br><br>
-            <input type="text" id="phone" placeholder="Phone" required><br><br>
+            <input type="text" id="name" placeholder="Your Name" required>
+            <input type="email" id="email" placeholder="Your Email" required>
+            <input type="text" id="phone" placeholder="Your Phone" required>
             <button type="submit">Start Chat</button>
         </form>
     </div>
 
     <div id="chat-interface" style="display:none;">
-        <h2>Chatbot</h2>
-        <div id="chat-box" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div><br>
-        <input type="text" id="user-input" placeholder="Type your message..." style="width:70%;">
-        <button onclick="sendMessage()">Send</button>
+        <h2>Chatbot by Anurag G.</h2>
+        <div id="chat-box"></div>
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
     </div>
 </body>
 </html>
