@@ -8,7 +8,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: url('https://media.licdn.com/dms/image/v2/C511BAQEekjflxjJ32g/company-background_10000/company-background_10000/0/1584491710118/onnsynex_ventures_pvt_ltd_cover?e=2147483647&v=beta&t=eo4CdHCasJ6EFPQDaETvsqnHNsYL1aadrutQTDAPng4') no-repeat center center fixed;
+            background: url('https://media.licdn.com/dms/image/v2/C511BAQEekjflxjJ32g/company-background_10000/company-background_10000/0/1584491710118/onnsynex_ventures_pvt_ltd_cover?e=1746525600&v=beta&t=REFYXKNX98VLCIccdMYJfcTk9spo6e-WVHOcS0SOB6E') no-repeat center center fixed;
             background-size: cover;
         }
 
@@ -37,7 +37,7 @@
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 8px 20px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
@@ -82,6 +82,15 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
+        }
+
+        /* New logo styling */
+        #logo {
+            position: absolute;
+            top:0px;
+            right: 20px;
+            width: 100px;
+            height: auto;
         }
     </style>
 
@@ -171,8 +180,11 @@
     </script>
 </head>
 <body>
+    <!-- Logo in the top-right corner -->
+    <img id="logo" src="https://osvftwz.com/wp-content/uploads/2023/09/OSV-FINAL-LOGO.webp" alt="Logo">
+
     <div id="registration-form">
-        <h2>Start Chatting</h2>
+        <h2>OSV Chatbot</h2>
         <form onsubmit="registerUser(event)">
             <input type="text" id="name" placeholder="Your Name" required>
             <input type="email" id="email" placeholder="Your Email" required>
