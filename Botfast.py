@@ -99,18 +99,23 @@ async def ask_question(query: Query):
             print(f"[Fast Match] {df.iloc[original_question_index]['questions']} -> {best_answer}")
             return JSONResponse(content={"response": best_answer})
 
-        # Step 2: If no string match, use semantic search
+        # Step 2: Semantic search with human-like response
         all_qna = "\n".join(f"Q: {q}\nA: {a}" for q, a in zip(df['questions'], df['answers']))
 
-        prompt = f"""You are a helpful assistant for OSV FTWZ FAQs.
-Below are the stored Q&A:
+        prompt = f"""
+You are a helpful, conversational assistant helping users understand OSV FTWZ's services.
+
+Below is a list of stored Q&A pairs for reference:
 
 {all_qna}
 
-A user asked: "{user_input}"
+Now, someone asked: "{user_input}"
 
-Find the most relevant answer. If not found, reply politely that you don't have an answer.
-Respond ONLY with the answer, not the question.
+Please find the most relevant answer from above. Rephrase it in a friendly, human tone with good grammar and natural structure. 
+DO NOT just copy the answer directly—rewrite it in your own words while keeping the core information accurate.
+If you can't find an answer, respond politely that the information isn't available.
+
+Just return the answer text only.
 """
 
         response = llm.invoke(prompt)
@@ -120,11 +125,12 @@ Respond ONLY with the answer, not the question.
             print(f"[Semantic Answer] {answer_text}")
             return JSONResponse(content={"response": answer_text})
         else:
-            return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that."})
+            return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that at the moment."})
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
+
 
 # Request model for storing client info
 class ClientInfo(BaseModel):
