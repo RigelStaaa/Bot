@@ -76,6 +76,12 @@
             display: flex;
             align-items: center;
         }
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
     </style>
 
     <script>
@@ -149,6 +155,19 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             document.getElementById("user-input").value = "";
         }
+
+        async function refreshBot() {
+            try {
+                const response = await fetch("/refresh");
+                const data = await response.json();
+                alert(data.message);
+                document.getElementById("chat-box").innerHTML = "";
+                // Stay in chat interface and keep registered
+            } catch (error) {
+                console.error("Error refreshing bot:", error);
+                alert("Failed to refresh bot.");
+            }
+        }
     </script>
 </head>
 <body>
@@ -163,7 +182,10 @@
     </div>
 
     <div id="chat-interface" style="display:none;">
-        <h2>Chatbot by Anurag G.</h2>
+        <div class="top-controls">
+            <h2>Chatbot by Anurag G.</h2>
+            <button onclick="refreshBot()">🔄 Refresh Chat</button>
+        </div>
         <div id="chat-box"></div>
         <div class="input-group">
             <input type="text" id="user-input" placeholder="Type your message...">
