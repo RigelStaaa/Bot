@@ -5,14 +5,12 @@ import gspread
 from gspread_dataframe import get_as_dataframe
 from google.oauth2 import service_account
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-import os
-import json
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from difflib import get_close_matches
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
+import os
+import json
 
 # Set up environment variables
 # Note: Set GROQ_API_KEY and GOOGLE_CREDENTIALS in Render Dashboard
@@ -25,7 +23,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def get_chat_widget():
     return FileResponse("static/chatbot.html")  # Returns your chatbot HTML file
-
 
 # Initialize Groq model
 llm = ChatGroq(
@@ -44,22 +41,20 @@ def load_data():
     sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
     worksheet = sheet.worksheet("Sheet1")
     
-    # Debugging: Print to confirm data is being loaded
     df = get_as_dataframe(worksheet).dropna(how='all')
     print(f"Loaded {len(df)} entries from Google Sheets.")
     return df
 
 # Function to refresh the bot with new data
 def refresh_bot():
-    global df, agent  # Use global variables to update them
-    df = load_data()  # Reload the data
+    global df, agent
+    df = load_data()
     
-    # Debugging: Ensure data is loaded before creating the agent
     if df.empty:
         print("Warning: No data loaded. The bot will not function properly.")
     else:
         print(f"Data refreshed with {len(df)} entries.")
-    
+
     agent = create_pandas_dataframe_agent(
         llm,
         df,
@@ -80,46 +75,15 @@ agent = create_pandas_dataframe_agent(
     allow_dangerous_code=True
 )
 
-# Request model
+# Request model for asking questions
 class Query(BaseModel):
     message: str
 
 @app.post("/ask")
-
-class ClientInfo(BaseModel):
-    name: str
-    email: str
-    phone: str
-
-@app.post("/start")
-async def start_chat(client: ClientInfo):
-    try:
-        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-        credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
-        creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
-        gc = gspread.authorize(creds)
-
-        sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
-        
-        # Assuming you have a second sheet named 'Clients' to store client info
-        try:
-            worksheet = sheet.worksheet("Clients")
-        except gspread.exceptions.WorksheetNotFound:
-            worksheet = sheet.add_worksheet(title="Clients", rows="1000", cols="3")
-            worksheet.append_row(["Name", "Email", "Phone"])
-
-        # Append client data
-        worksheet.append_row([client.name, client.email, client.phone])
-
-        return JSONResponse(content={"message": "Client information stored successfully."})
-
-    except Exception as e:
-        print(f"Error occurred while storing client info: {str(e)}")
-        return JSONResponse(content={"error": str(e)}, status_code=400)
 async def ask_question(query: Query):
     try:
         user_input = query.message.strip()
-        print(f"User query: {user_input}")  # Debug
+        print(f"User query: {user_input}")
 
         if not user_input:
             return JSONResponse(content={"response": "Please enter a message."})
@@ -135,7 +99,7 @@ async def ask_question(query: Query):
             print(f"[Fast Match] {df.iloc[original_question_index]['questions']} -> {best_answer}")
             return JSONResponse(content={"response": best_answer})
 
-        # Step 2: If no string match, do semantic search
+        # Step 2: If no string match, use semantic search
         all_qna = "\n".join(f"Q: {q}\nA: {a}" for q, a in zip(df['questions'], df['answers']))
 
         prompt = f"""You are a helpful assistant for OSV FTWZ FAQs.
@@ -162,12 +126,41 @@ Respond ONLY with the answer, not the question.
         print(f"Error occurred: {str(e)}")
         return JSONResponse(content={"error": str(e)}, status_code=400)
 
+# Request model for storing client info
+class ClientInfo(BaseModel):
+    name: str
+    email: str
+    phone: str
 
+@app.post("/start")
+async def start_chat(client: ClientInfo):
+    try:
+        SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+        credentials_info = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+        creds = service_account.Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+        gc = gspread.authorize(creds)
 
+        sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1s_uCbs8vxwKQGABKCjEpZCNrxn6omqcJG1DK3HklOF8/edit?usp=sharing")
+        
+        # Assuming there is a 'Clients' worksheet to store client info
+        try:
+            worksheet = sheet.worksheet("Clients")
+        except gspread.exceptions.WorksheetNotFound:
+            worksheet = sheet.add_worksheet(title="Clients", rows="1000", cols="3")
+            worksheet.append_row(["Name", "Email", "Phone"])
+
+        # Append client data
+        worksheet.append_row([client.name, client.email, client.phone])
+
+        return JSONResponse(content={"message": "Client information stored successfully."})
+
+    except Exception as e:
+        print(f"Error occurred while storing client info: {str(e)}")
+        return JSONResponse(content={"error": str(e)}, status_code=400)
 
 # Refresh endpoint
 @app.get("/refresh")
 async def refresh():
-    global agent  # Access the global agent
-    agent = refresh_bot()  # Refresh the bot
+    global agent
+    agent = refresh_bot()
     return JSONResponse(content={"message": "Bot refreshed successfully!"})
