@@ -6,9 +6,10 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f4f6f8;
             margin: 0;
             padding: 20px;
+            background: url('https://source.unsplash.com/1600x900/?technology,abstract') no-repeat center center fixed;
+            background-size: cover;
         }
 
         h2 {
@@ -18,7 +19,7 @@
         #registration-form, #chat-interface {
             max-width: 500px;
             margin: auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.9); /* slightly transparent white */
             padding: 30px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             border-radius: 10px;
@@ -162,7 +163,6 @@
                 const data = await response.json();
                 alert(data.message);
                 document.getElementById("chat-box").innerHTML = "";
-                // Stay in chat interface and keep registered
             } catch (error) {
                 console.error("Error refreshing bot:", error);
                 alert("Failed to refresh bot.");
