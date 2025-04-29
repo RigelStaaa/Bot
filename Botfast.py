@@ -88,7 +88,7 @@ async def ask_question(query: Query):
         if not user_input:
             return JSONResponse(content={"response": "Please enter a message."})
 
-        # Step 1: Fast string match
+        # Step 1: Fast string match with OSV/FTWZ dataset
         questions_list = [q.lower() for q in df['questions'].dropna().tolist()]
         match = get_close_matches(user_input.lower(), questions_list, n=1, cutoff=0.7)
 
@@ -99,7 +99,7 @@ async def ask_question(query: Query):
             print(f"[Fast Match] {df.iloc[original_question_index]['questions']} -> {best_answer}")
             return JSONResponse(content={"response": best_answer})
 
-        # Step 2: If no string match, use semantic search
+        # Step 2: If no string match, use semantic search within OSV/FTWZ dataset
         all_qna = "\n".join(f"Q: {q}\nA: {a}" for q, a in zip(df['questions'], df['answers']))
 
         prompt = f"""You are a helpful assistant for OSV FTWZ FAQs.
@@ -119,6 +119,22 @@ Respond ONLY with the answer, not the question.
         if answer_text:
             print(f"[Semantic Answer] {answer_text}")
             return JSONResponse(content={"response": answer_text})
+
+        # Step 3: Fallback - If no relevant FAQ match, answer using the model's general knowledge
+        # This is the fallback section where the bot uses its own intelligence
+        fallback_prompt = f"""You are a general knowledge assistant. Please respond to the following question with your own intelligence:
+
+Question: {user_input}
+
+Provide a helpful and informative answer.
+"""
+
+        general_response = llm.invoke(fallback_prompt)
+        general_answer_text = general_response.content.strip()
+
+        if general_answer_text:
+            print(f"[General Knowledge Answer] {general_answer_text}")
+            return JSONResponse(content={"response": general_answer_text})
         else:
             return JSONResponse(content={"response": "I'm sorry, I don't have an answer for that."})
 
